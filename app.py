@@ -51,36 +51,39 @@ st.markdown("""
         --shadow:      0 1px 6px rgba(13,31,82,0.08);
     }
 
-    /* ── Fondo principal ── */
+    /* ── Fondo principal y prevención de scroll horizontal ── */
+    html, body, [data-testid="stAppViewContainer"] {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
     .stApp { background-color: var(--bg) !important; color: var(--text) !important; }
 
-    /* ── Ajuste a toda la pantalla ── */
-    .main .block-container,
-    [data-testid="stMainBlockContainer"],
-    .block-container {
-        max-width: 100% !important;
-        width: 100% !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
+    /* ── Tipografía base de encabezado ── */
+    .main-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--navy);
+        line-height: 1.2;
+    }
+    .main-subtitle {
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: #94a3b8;
+    }
+    .main-desc {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+    }
+    .station-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0d1f52;
+        margin-top: 4px;
     }
 
-    /* ── Sidebar navy — 20% de ancho, siempre visible a la izquierda ── */
-    section[data-testid="stSidebar"],
-    [data-testid="stSidebar"] {
-        min-width: 20vw !important;
-        width:     20vw !important;
-        max-width: 20vw !important;
-        background: var(--sidebar-bg) !important;
-        transform: none !important;
-        margin-left: 0 !important;
-        left: 0 !important;
-        top: 0 !important;
-        position: relative !important;
-        display: block !important;
-        visibility: visible !important;
-    }
+    /* ── Contenido de la sidebar ── */
     div[data-testid="stSidebarContent"] {
         width: 100% !important;
         min-width: 100% !important;
@@ -93,27 +96,169 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* Botón de control de sidebar */
+    /* ── Botones de colapso y apertura del sidebar ── */
+    div[data-testid="stSidebarCollapseButton"] button {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    }
+    div[data-testid="stSidebarCollapseButton"] svg {
+        fill: #ffffff !important;
+        color: #ffffff !important;
+    }
+
     button[data-testid="stExpandSidebarButton"],
     [data-testid="collapsedControl"] {
         visibility: visible !important;
         display: flex !important;
         opacity: 1 !important;
         position: fixed !important;
-        top: 14px !important;
-        left: 14px !important;
+        top: 10px !important;
+        left: 10px !important;
         z-index: 9999999 !important;
         background: #0d1f52 !important;
         color: #ffffff !important;
-        border: 1px solid rgba(255,255,255,0.25) !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
         border-radius: 8px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.3) !important;
         cursor: pointer !important;
+        width: 38px !important;
+        height: 38px !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     button[data-testid="stExpandSidebarButton"] svg,
     [data-testid="collapsedControl"] svg {
         fill: #ffffff !important;
         color: #ffffff !important;
+    }
+
+    /* ═════════════════════════════════════════════════════════════ */
+    /* DESKTOP (>= 992px) — Sidebar navy fijo a la izquierda       */
+    /* ═════════════════════════════════════════════════════════════ */
+    @media (min-width: 992px) {
+        section[data-testid="stSidebar"],
+        [data-testid="stSidebar"] {
+            min-width: 280px !important;
+            width: 280px !important;
+            max-width: 280px !important;
+            background: var(--sidebar-bg) !important;
+            transform: none !important;
+            margin-left: 0 !important;
+            left: 0 !important;
+            top: 0 !important;
+            position: relative !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        .main .block-container,
+        [data-testid="stMainBlockContainer"],
+        .block-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-top: 1.5rem !important;
+            padding-bottom: 2rem !important;
+        }
+
+        /* En desktop el sidebar siempre está visible, no se necesita botón de toggle */
+        button[data-testid="stExpandSidebarButton"],
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+    }
+
+    /* ═════════════════════════════════════════════════════════════ */
+    /* MOBILE & TABLET (< 992px) — Drawer flotante, 100% de ancho,  */
+    /* columnas en vertical, tipografía adaptativa y cero squishing */
+    /* ═════════════════════════════════════════════════════════════ */
+    @media (max-width: 991px) {
+        /* Sidebar como drawer flotante sobre la pantalla */
+        section[data-testid="stSidebar"],
+        [data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            width: 85vw !important;
+            max-width: 320px !important;
+            min-width: 260px !important;
+            z-index: 999999 !important;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45) !important;
+            background: var(--sidebar-bg) !important;
+            transition: transform 0.25s ease-in-out !important;
+        }
+
+        /* Estado colapsado en móvil */
+        section[data-testid="stSidebar"][aria-expanded="false"],
+        [data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(-105%) !important;
+            display: none !important;
+        }
+
+        /* Estado expandido en móvil */
+        section[data-testid="stSidebar"][aria-expanded="true"],
+        [data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            display: block !important;
+        }
+
+        /* Contenedor principal ocupa el 100% sin dejar margen */
+        .main, [data-testid="stMain"] {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
+
+        .main .block-container,
+        [data-testid="stMainBlockContainer"],
+        .block-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            padding-top: 54px !important; /* Espacio para el botón de menú */
+            padding-bottom: 24px !important;
+        }
+
+        /* Apilar columnas en vertical en móvil para no apretar tarjetas */
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 12px !important;
+        }
+        [data-testid="column"] {
+            width: 100% !important;
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+            margin-bottom: 4px !important;
+        }
+
+        /* Escala tipográfica adaptativa */
+        .main-title {
+            font-size: 1.45rem !important;
+        }
+        .main-subtitle {
+            font-size: 0.88rem !important;
+            display: block !important;
+            margin-top: 2px !important;
+        }
+        .main-desc {
+            font-size: 0.82rem !important;
+        }
+        .station-title {
+            font-size: 1.35rem !important;
+        }
+        .metric-value {
+            font-size: 1.65rem !important;
+        }
+        .metric-box {
+            padding: 14px 16px !important;
+        }
+        .card {
+            padding: 14px 16px !important;
+        }
     }
 
     /* Texto sidebar */
@@ -530,12 +675,12 @@ def main():
 
     # ── HEADER PRINCIPAL ─────────────────────────────────────
     st.markdown("""
-    <div style='padding:4px 0 20px;'>
-        <h1 style='font-size:2rem;font-weight:800;margin:0;color:#0d1f52;'>
+    <div style='padding:4px 0 16px;'>
+        <h1 class='main-title'>
             🌿 San Ecoland
-            <span style='font-size:1.1rem;font-weight:400;color:#94a3b8;'> / Smart City Telemetry</span>
+            <span class='main-subtitle'> / Smart City Telemetry</span>
         </h1>
-        <p style='margin:6px 0 0;color:#64748b;font-size:0.95rem;'>
+        <p class='main-desc'>
             Monitoreo en tiempo real · Red IoT: 10 Smart Bus Stops + 5 Hydration Stations
         </p>
     </div>
@@ -568,10 +713,10 @@ def main():
 
     st.markdown(f"""
     <div class="card" style="border-left:4px solid {accent_color}; margin-bottom:16px; padding:18px 24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
                 <div style="font-size:0.82rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">{type_label}</div>
-                <div style="font-size:1.75rem;font-weight:800;color:#0d1f52;margin-top:4px;">{selected_station}</div>
+                <div class="station-title">{selected_station}</div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:0.8rem;color:#94a3b8;font-weight:600;">ÚLTIMO HEARTBEAT</div>
@@ -747,7 +892,7 @@ def main():
     # ── FOOTER ────────────────────────────────────────────────
     st.markdown(f"""
     <div style="margin-top:36px;padding:14px 0;border-top:1px solid #dde3ec;
-                display:flex;justify-content:space-between;align-items:center;
+                display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
                 font-size:0.84rem;color:#94a3b8;">
         <span>🌿 <strong style="color:#64748b;">San Ecoland Smart City</strong> · IoT Telemetry Platform v2.0</span>
         <span>Actualizado: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} ART</span>
