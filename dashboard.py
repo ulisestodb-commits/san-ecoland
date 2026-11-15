@@ -372,13 +372,7 @@ def render_metric_card(label: str, value: str, delta: str = None, delta_type: st
             d_color = "#64748b"
         delta_html = f'<div class="metric-delta" style="color:{d_color};">{delta}</div>'
     
-    return f"""
-    <div class="metric-box">
-        <div class="metric-label">{label}</div>
-        <div class="metric-value">{value}</div>
-        {delta_html}
-    </div>
-    """
+    return f'<div class="metric-box"><div class="metric-label">{label}</div><div class="metric-value">{value}</div>{delta_html}</div>'
 
 
 # ─────────────────────────────────────────────────────────────
@@ -437,36 +431,21 @@ def render_svg_donut(solar_kwh: float, grid_kwh: float) -> str:
     circ = 2 * math.pi * r
     solar_dash = circ * solar_pct
     
-    return f"""
-    <div class="card" style="padding:16px 20px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <svg viewBox="0 0 200 200" style="width:100%; max-width:210px; height:auto; display:block;">
-            <!-- Base Grid circle (Navy) -->
-            <circle cx="100" cy="100" r="{r}" fill="none" stroke="#0d1f52" stroke-width="26"
-                    stroke-dasharray="{circ:.1f}" stroke-dashoffset="0"
-                    transform="rotate(-90 100 100)"/>
-                    
-            <!-- Solar segment (Teal) -->
-            <circle cx="100" cy="100" r="{r}" fill="none" stroke="#1ab8cc" stroke-width="26"
-                    stroke-dasharray="{solar_dash:.1f} {circ:.1f}" stroke-dashoffset="0"
-                    transform="rotate(-90 100 100)"/>
-                    
-            <!-- Center Text -->
-            <text x="100" y="96" text-anchor="middle" font-size="24" font-weight="800" fill="#0d1f52" font-family="system-ui, sans-serif">{total:.0f}</text>
-            <text x="100" y="116" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" font-family="system-ui, sans-serif">kWh total</text>
-        </svg>
-        <div style="display:flex; gap:20px; justify-content:center; margin-top:8px;">
-            <div style="text-align:center;">
-                <div style="font-size:1.15rem; font-weight:800; color:#1ab8cc;">{solar_kwh:.1f} kWh</div>
-                <div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">SOLAR ({solar_pct*100:.1f}%)</div>
-            </div>
-            <div style="color:#dde3ec; font-size:1.4rem; line-height:1;">|</div>
-            <div style="text-align:center;">
-                <div style="font-size:1.15rem; font-weight:800; color:#0d1f52;">{grid_kwh:.1f} kWh</div>
-                <div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">GRID ({(1-solar_pct)*100:.1f}%)</div>
-            </div>
-        </div>
-    </div>
-    """
+    lines = [
+        '<div class="card" style="padding:16px 20px; display:flex; flex-direction:column; align-items:center; justify-content:center;">',
+        '<svg viewBox="0 0 200 200" style="width:100%; max-width:210px; height:auto; display:block;">',
+        f'<circle cx="100" cy="100" r="{r}" fill="none" stroke="#0d1f52" stroke-width="26" stroke-dasharray="{circ:.1f}" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>',
+        f'<circle cx="100" cy="100" r="{r}" fill="none" stroke="#1ab8cc" stroke-width="26" stroke-dasharray="{solar_dash:.1f} {circ:.1f}" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>',
+        f'<text x="100" y="96" text-anchor="middle" font-size="24" font-weight="800" fill="#0d1f52" font-family="system-ui, sans-serif">{total:.0f}</text>',
+        '<text x="100" y="116" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b" font-family="system-ui, sans-serif">kWh total</text>',
+        '</svg>',
+        '<div style="display:flex; gap:20px; justify-content:center; margin-top:8px;">',
+        f'<div style="text-align:center;"><div style="font-size:1.15rem; font-weight:800; color:#1ab8cc;">{solar_kwh:.1f} kWh</div><div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">SOLAR ({solar_pct*100:.1f}%)</div></div>',
+        '<div style="color:#dde3ec; font-size:1.4rem; line-height:1;">|</div>',
+        f'<div style="text-align:center;"><div style="font-size:1.15rem; font-weight:800; color:#0d1f52;">{grid_kwh:.1f} kWh</div><div style="font-size:0.75rem; color:#94a3b8; font-weight:700;">GRID ({(1-solar_pct)*100:.1f}%)</div></div>',
+        '</div></div>'
+    ]
+    return "".join(lines)
 
 
 # ─────────────────────────────────────────────────────────────
