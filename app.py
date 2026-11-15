@@ -6,7 +6,6 @@
 """
 
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -22,28 +21,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# Forzar apertura inmediata de la barra lateral limpiando cualquier estado colapsado previo en el navegador
-components.html("""
-<script>
-try {
-    const p = window.parent;
-    if (p && p.localStorage) {
-        Object.keys(p.localStorage).forEach(k => {
-            if (k.includes("stSidebarCollapsed")) {
-                p.localStorage.setItem(k, "false");
-            }
-        });
-        const btn = p.document.querySelector('button[data-testid="stExpandSidebarButton"]') || 
-                    p.document.querySelector('[data-testid="collapsedControl"] button') ||
-                    p.document.querySelector('[data-testid="collapsedControl"]');
-        if (btn) {
-            btn.click();
-        }
-    }
-} catch(e) {}
-</script>
-""", height=0, width=0)
 
 # ─────────────────────────────────────────────────────────────
 # GLOBAL STYLING  — paleta Xendar: blanco/gris claro + navy + teal
@@ -496,14 +473,12 @@ def main():
         if "navigate_to" in st.session_state:
             st.session_state["_station_sel"] = st.session_state.pop("navigate_to")
 
-        sel_idx = 0
-        if "_station_sel" in st.session_state and st.session_state["_station_sel"] in station_list:
-            sel_idx = station_list.index(st.session_state["_station_sel"])
+        if "_station_sel" not in st.session_state or st.session_state["_station_sel"] not in station_list:
+            st.session_state["_station_sel"] = station_list[0]
 
         selected_station = st.selectbox(
             "Nodo",
             station_list,
-            index=sel_idx,
             label_visibility="collapsed",
             key="_station_sel",
         )

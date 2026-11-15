@@ -1,18 +1,12 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
-║          SAN ECOLAND — Smart City Telemetry Dashboard v2.0   ║
+║          SAN ECOLAND — Smart City Telemetry Dashboard        ║
 ║          IoT Network: 10 Smart Bus Stops + 5 Hydration Sta.  ║
 ╚══════════════════════════════════════════════════════════════╝
-Cambios v2.0:
-  · Sidebar: gráfico de red eliminado → panel de Alertas Activas con navegación directa
-  · Gráfico de barras: diario (30d) → mensual (12 meses)
-  · Actuadores: +Agua Fría, +Agua Caliente, +WiFi, +modo Idle/Black para pantalla
-  · Salud del sistema: +estado de Iluminación LED
-  · Paleta Xendar: fondo claro, navy profundo, teal, alto contraste
 """
 
 import streamlit as st
-import streamlit.components.v1 as components
+import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
@@ -27,28 +21,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# Forzar apertura inmediata de la barra lateral limpiando cualquier estado colapsado previo en el navegador
-components.html("""
-<script>
-try {
-    const p = window.parent;
-    if (p && p.localStorage) {
-        Object.keys(p.localStorage).forEach(k => {
-            if (k.includes("stSidebarCollapsed")) {
-                p.localStorage.setItem(k, "false");
-            }
-        });
-        const btn = p.document.querySelector('button[data-testid="stExpandSidebarButton"]') || 
-                    p.document.querySelector('[data-testid="collapsedControl"] button') ||
-                    p.document.querySelector('[data-testid="collapsedControl"]');
-        if (btn) {
-            btn.click();
-        }
-    }
-} catch(e) {}
-</script>
-""", height=0, width=0)
 
 # ─────────────────────────────────────────────────────────────
 # GLOBAL STYLING  — paleta Xendar: blanco/gris claro + navy + teal
@@ -302,7 +274,6 @@ def month_label(months_back: int) -> str:
         y -= 1
     return datetime(y, m, 1).strftime("%b %Y")
 
-# Precalculado una vez al inicio del módulo
 MONTH_LABELS = [month_label(i) for i in range(11, -1, -1)]
 
 
@@ -346,7 +317,7 @@ def generate_mock_data() -> dict:
             "total_kwh":      total_kwh,
             "solar_kwh":      solar_kwh,
             "grid_kwh":       grid_kwh,
-            "monthly_kwh":    monthly.tolist(),           # 12 valores mensuales
+            "monthly_kwh":    monthly.tolist(),
             "co2_reduced":    round(total_kwh * 0.35, 2),
             "wifi_online":    wifi_ok,
             "chiller_online": chiller_ok,
@@ -373,7 +344,7 @@ def init_session(d: dict, n: str):
         f"{n}_chiller_mode":   "Idle (standby)",
         f"{n}_heater":         True,
         f"{n}_heater_mode":    "Idle (standby)",
-        f"{n}_wifi_act":       True,          # actuador WiFi (distinto del estado HW)
+        f"{n}_wifi_act":       True,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -399,12 +370,12 @@ def monthly_bar_chart(monthly_kwh: list) -> go.Figure:
     avg = float(np.mean(monthly_kwh))
     colors = []
     for idx, v in enumerate(monthly_kwh):
-        if idx == 11:                        # mes actual → navy destacado
+        if idx == 11:
             colors.append("#0d1f52")
         elif v >= avg:
-            colors.append("#1ab8cc")         # teal
+            colors.append("#1ab8cc")
         else:
-            colors.append("#cbd5e1")         # gris suave
+            colors.append("#cbd5e1")
 
     fig = go.Figure(go.Bar(
         x=MONTH_LABELS,
@@ -502,21 +473,19 @@ def main():
         if "navigate_to" in st.session_state:
             st.session_state["_station_sel"] = st.session_state.pop("navigate_to")
 
-        sel_idx = 0
-        if "_station_sel" in st.session_state and st.session_state["_station_sel"] in station_list:
-            sel_idx = station_list.index(st.session_state["_station_sel"])
+        if "_station_sel" not in st.session_state or st.session_state["_station_sel"] not in station_list:
+            st.session_state["_station_sel"] = station_list[0]
 
         selected_station = st.selectbox(
             "Nodo",
             station_list,
-            index=sel_idx,
             label_visibility="collapsed",
             key="_station_sel",
         )
 
         st.markdown('<div style="border-top:1px solid rgba(255,255,255,0.1);margin:14px 0;"></div>', unsafe_allow_html=True)
 
-        # ── Panel de Alertas Activas (reemplaza el mini-chart eliminado) ──
+        # ── Panel de Alertas Activas ──
         n_alerts = len(failing)
         if n_alerts == 0:
             alert_title_color = "#6ee7b7"
@@ -539,7 +508,7 @@ def main():
                 unsafe_allow_html=True,
             )
         else:
-            # Mostrar máximo 3 alertas para no saturar la barra lateral
+            # Mostrar las 3 alertas activas
             for fname, fdata in list(failing.items())[:3]:
                 issues = []
                 if not fdata["wifi_online"]:    issues.append("WiFi")
@@ -713,11 +682,10 @@ def main():
         if not hok:
             st.error("🚨 **HEATER OFFLINE** — Agua caliente suspendida. Ticket #HTR-007 generado.", icon="🔴")
 
-    # LED Lighting — nuevo en v2.0
+    # LED Lighting
     with h4:
         lok      = data["led_online"]
         led_mode = data["led_mode"]
-        # Decide badge por modo
         if not lok:
             led_badge = badge(False, fail_txt="FALLA")
         elif led_mode == "ECO":
@@ -820,7 +788,6 @@ def main():
                 key=f"{selected_station}_screen",
             )
             if not sc_on:
-                # Permite elegir entre idle (logo) o black (sin señal)
                 st.radio(
                     "Modo al apagar",
                     ["Idle (logo fijo)", "Black (sin señal)"],
