@@ -1,10 +1,13 @@
 FROM python:3.11-slim
 
-# Instalar Nginx y dependencias de sistema
+# Instalar Nginx, curl y herramientas de sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Limpiar configuraciones por defecto de Nginx en Debian
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
 WORKDIR /app
 
@@ -22,6 +25,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 RUN chmod +x start.sh
 
 # Puerto estándar que Railway mapea mediante $PORT
-EXPOSE 8080
+EXPOSE 8080 8501
 
 CMD ["./start.sh"]
