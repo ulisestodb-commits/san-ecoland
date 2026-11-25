@@ -1,6 +1,7 @@
 """
-SAN ECOLAND — Base de Datos de Telemetría (SQLite WAL)
+XENDAR — Base de Datos de Telemetría (SQLite WAL)
 Gestiona la persistencia thread-safe de eventos IoT enviados por el ESP32.
+Incluye soporte para telemetría de hardware, contadores y Botón de Pánico.
 """
 
 import sqlite3
@@ -22,7 +23,7 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db():
-    """Inicializa las tablas de telemetría si no existen."""
+    """Inicializa las tablas de telemetría si no existen y aplica migraciones seguras."""
     with get_connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS telemetry (
@@ -35,10 +36,18 @@ def init_db():
                 luces_ok INTEGER NOT NULL,
                 despachos_frio INTEGER NOT NULL,
                 despachos_calor INTEGER NOT NULL,
+                panico_activo INTEGER NOT NULL DEFAULT 0,
                 raw_payload TEXT
             );
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_station_time ON telemetry(station, id DESC);")
+
+        # Migración segura: agregar columna panico_activo si la tabla ya existía sin ella
+        try:
+            conn.execute("ALTER TABLE telemetry ADD COLUMN panico_activo INTEGER NOT NULL DEFAULT 0;")
+        except sqlite3.OperationalError:
+            pass  # Columna ya existente
+
         conn.commit()
 
 
@@ -54,16 +63,17 @@ def save_telemetry(data: Dict[str, Any], station: str = "Demo") -> int:
     luces_ok = 1 if data.get("luces_ok") else 0
     despachos_frio = int(data.get("despachos_frio", 0))
     despachos_calor = int(data.get("despachos_calor", 0))
+    panico_activo = 1 if data.get("panico_activo") else 0
     raw_payload = json.dumps(data)
 
     with get_connection() as conn:
         cursor = conn.execute(
             """
             INSERT INTO telemetry 
-            (station, timestamp, wifi_ok, chiller_ok, boiler_ok, luces_ok, despachos_frio, despachos_calor, raw_payload)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (station, timestamp, wifi_ok, chiller_ok, boiler_ok, luces_ok, despachos_frio, despachos_calor, panico_activo, raw_payload)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (station, ts, wifi_ok, chiller_ok, boiler_ok, luces_ok, despachos_frio, despachos_calor, raw_payload)
+            (station, ts, wifi_ok, chiller_ok, boiler_ok, luces_ok, despachos_frio, despachos_calor, panico_activo, raw_payload)
         )
         conn.commit()
         return cursor.lastrowid
@@ -76,7 +86,7 @@ def get_latest_telemetry(station: str = "Demo") -> Optional[Dict[str, Any]]:
         row = conn.execute(
             """
             SELECT id, station, timestamp, wifi_ok, chiller_ok, boiler_ok, luces_ok, 
-                   despachos_frio, despachos_calor, raw_payload
+                   despachos_frio, despachos_calor, panico_activo, raw_payload
             FROM telemetry 
             WHERE station = ? 
             ORDER BY id DESC LIMIT 1
@@ -86,6 +96,9 @@ def get_latest_telemetry(station: str = "Demo") -> Optional[Dict[str, Any]]:
 
         if not row:
             return None
+
+        # Verificar si panico_activo está en la fila
+        panico = bool(row["panico_activo"]) if "panico_activo" in row.keys() else False
 
         return {
             "id": row["id"],
@@ -97,6 +110,7 @@ def get_latest_telemetry(station: str = "Demo") -> Optional[Dict[str, Any]]:
             "luces_ok": bool(row["luces_ok"]),
             "despachos_frio": row["despachos_frio"],
             "despachos_calor": row["despachos_calor"],
+            "panico_activo": panico,
             "raw_payload": row["raw_payload"],
         }
 
@@ -108,7 +122,7 @@ def get_telemetry_history(station: str = "Demo", limit: int = 50) -> List[Dict[s
         rows = conn.execute(
             """
             SELECT id, station, timestamp, wifi_ok, chiller_ok, boiler_ok, luces_ok, 
-                   despachos_frio, despachos_calor
+                   despachos_frio, despachos_calor, panico_activo
             FROM (
                 SELECT * FROM telemetry 
                 WHERE station = ? 
@@ -119,8 +133,10 @@ def get_telemetry_history(station: str = "Demo", limit: int = 50) -> List[Dict[s
             (station, limit)
         ).fetchall()
 
-        return [
-            {
+        res = []
+        for r in rows:
+            panico = bool(r["panico_activo"]) if "panico_activo" in r.keys() else False
+            res.append({
                 "id": r["id"],
                 "station": r["station"],
                 "timestamp": r["timestamp"],
@@ -130,9 +146,9 @@ def get_telemetry_history(station: str = "Demo", limit: int = 50) -> List[Dict[s
                 "luces_ok": bool(r["luces_ok"]),
                 "despachos_frio": r["despachos_frio"],
                 "despachos_calor": r["despachos_calor"],
-            }
-            for r in rows
-        ]
+                "panico_activo": panico,
+            })
+        return res
 
 
 def get_telemetry_stats(station: str = "Demo") -> Dict[str, Any]:

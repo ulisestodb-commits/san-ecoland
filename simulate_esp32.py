@@ -1,11 +1,13 @@
 """
-Simulador de ESP32 para enviar telemetría a la API de San Ecoland.
+Simulador de ESP32 para enviar telemetría a la API de Xendar.
 Uso:
-    python simulate_esp32.py [URL_DESTINO]
+    python simulate_esp32.py [URL_DESTINO] [--panic]
 Ejemplo local:
     python simulate_esp32.py http://localhost:8000/api/telemetria
+    python simulate_esp32.py http://localhost:8000/api/telemetria --panic
 Ejemplo Railway:
-    python simulate_esp32.py https://tu-app.up.railway.app/api/telemetria
+    python simulate_esp32.py https://san-ecoland.up.railway.app/api/telemetria
+    python simulate_esp32.py https://san-ecoland.up.railway.app/api/telemetria --panic
 """
 
 import sys
@@ -15,19 +17,19 @@ import urllib.error
 
 DEFAULT_URL = "http://localhost:8000/api/telemetria"
 
-def send_telemetry(url=DEFAULT_URL, payload=None):
-    if payload is None:
-        # Payload exacto especificado en los requerimientos
-        payload = {
-            "wifi_ok": True,
-            "chiller_ok": True,
-            "boiler_ok": False,
-            "luces_ok": True,
-            "despachos_frio": 12,
-            "despachos_calor": 5
-        }
+def send_telemetry(url=DEFAULT_URL, panic=False):
+    payload = {
+        "wifi_ok": True,
+        "chiller_ok": True,
+        "boiler_ok": False,
+        "luces_ok": True,
+        "despachos_frio": 12,
+        "despachos_calor": 5,
+        "panico_activo": panic
+    }
 
     print(f"\n📡 Enviando telemetría a: {url}")
+    print(f"🚨 Estado de Pánico: {'ACTIVADO' if panic else 'Normal (Inactivo)'}")
     print("📦 Payload:")
     print(json.dumps(payload, indent=2))
 
@@ -51,5 +53,8 @@ def send_telemetry(url=DEFAULT_URL, payload=None):
         print("Asegúrate de que el backend de FastAPI esté corriendo (ej. 'uvicorn api:app --port 8000')")
 
 if __name__ == "__main__":
-    target_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL
-    send_telemetry(target_url)
+    args = sys.argv[1:]
+    is_panic = "--panic" in args
+    target_args = [a for a in args if a != "--panic"]
+    target_url = target_args[0] if len(target_args) > 0 else DEFAULT_URL
+    send_telemetry(target_url, panic=is_panic)

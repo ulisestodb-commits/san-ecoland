@@ -1,32 +1,32 @@
-# 🌿 SAN ECOLAND — Telemetría IoT en Tiempo Real (Estación Demo)
+# ⚡ XENDAR | Smart & Sustentable — Tablero de Control Ejecutivo · Telemetría IoT
 
-Refactorización de la plataforma para conectar la **Valija IoT con ESP32** mediante eventos HTTP POST en tiempo real hacia una única estación denominada **"Demo"**, eliminando cualquier dato simulado o hardcodeado.
+Plataforma de telemetría IoT en tiempo real para estaciones de hidratación inteligentes de **Xendar** ([xendar.com.ar](https://xendar.com.ar)), conectada con la **Valija IoT con ESP32** mediante peticiones HTTPS POST basadas en eventos hacia la estación **"Demo"**.
 
 ---
 
-## 📐 Arquitectura del Sistema
+## 📐 Arquitectura de Producción (Railway)
 
 ```
-[ ESP32 - Valija IoT ]
-         │
-         │  HTTP POST /api/telemetria (JSON)
-         ▼
-[ Nginx Reverse Proxy (Puerto $PORT Railway) ]
-    ├── /api/*   ──>  [ FastAPI / Uvicorn (Puerto 8000) ]
+[ ESP32 Valija IoT (Pin 18 Pánico) ]
+               │
+               │  HTTPS POST /api/telemetria (JSON)
+               ▼
+[ Nginx Reverse Proxy (Puerto dinámico $PORT) ]
+    ├── /api/*   ──>  [ FastAPI (Puerto interno 8001) ]
     │                               │
     │                        (Escribe eventos)
     │                               ▼
-    │                     [ SQLite (telemetry.db - WAL Mode) ]
+    │                     [ SQLite (telemetry.db - Modo WAL) ]
     │                               ▲
     │                        (Lee telemetría)
     │                               │
-    └── /*       ──>  [ Streamlit Dashboard (Puerto 8501) ]
+    └── /*       ──>  [ Streamlit Dashboard (Puerto interno 8502) ]
 ```
 
-- **Backend (FastAPI)**: Endpoint ultra ligero `/api/telemetria` que valida la estructura exacta del JSON y almacena cada evento con timestamp.
-- **Base de Datos (SQLite WAL)**: `telemetry.db` configurada en modo Write-Ahead Logging (`WAL`), permitiendo lecturas concurrentes sin bloqueos de concurrencia entre FastAPI y Streamlit.
-- **Frontend (Streamlit)**: Monitorea exclusivamente la estación **"Demo"**, calculando los KPIs de agua en litros y reflejando las fallas de hardware en rojo tanto en los componentes como en el panel lateral de alertas activas.
-- **Despliegue en Railway**: Un único contenedor Docker orquesta FastAPI, Streamlit y Nginx, escuchando en el puerto dinámico `$PORT` de Railway.
+- **Backend (FastAPI)**: Endpoint ligero `/api/telemetria` que valida la estructura del JSON y persiste cada evento con timestamp.
+- **Base de Datos (SQLite WAL)**: `telemetry.db` en modo Write-Ahead Logging (`WAL`), con soporte nativo para contadores, fallas de hardware y Botón de Pánico.
+- **Frontend Ejecutivo (Streamlit)**: Identidad corporativa de Xendar, tipografía *Inter*, KPIs de agua en Litros, grilla de 5 módulos de hardware y alerta de emergencia prioritaria de ancho completo ante eventos de pánico.
+- **Despliegue en Railway**: Contenedor Docker único orquestando Nginx, FastAPI y Streamlit con healthcheck de inicio.
 
 ---
 
@@ -41,130 +41,51 @@ El ESP32 envía peticiones `POST` a `/api/telemetria` con el siguiente cuerpo:
   "boiler_ok": false,
   "luces_ok": true,
   "despachos_frio": 12,
-  "despachos_calor": 5
+  "despachos_calor": 5,
+  "panico_activo": false
 }
 ```
 
 ### Mapeo de Componentes y Reglas de Negocio:
-1. **Contadores de Suministro (0.25 L por despacho)**:
+
+1. **Botón de Pánico / Emergencia (Pin 18)**:
+   - `panico_activo == true`: Dispara un **banner de emergencia de ancho completo** en rojo pulsante (`#DC2626`) en el tope del dashboard y encabeza con máxima prioridad las **Alertas Activas** en la barra lateral.
+2. **Contadores de Suministro (0.25 L por despacho)**:
    - **Agua caliente suministrada**: `despachos_calor * 0.25 L` (ej. 5 despachos = 1.25 L).
    - **Agua fría suministrada**: `despachos_frio * 0.25 L` (ej. 12 despachos = 3.00 L).
-2. **Alarmas de Hardware (Event-Driven)**:
-   - Si `wifi_ok == false`: Módulo WiFi fuera de servicio (resaltado en rojo).
-   - Si `chiller_ok == false`: Módulo Chiller fuera de servicio (resaltado en rojo).
-   - Si `boiler_ok == false`: Módulo Boiler fuera de servicio (resaltado en rojo).
-   - Si `luces_ok == false`: Módulo de Iluminación fuera de servicio (resaltado en rojo).
-   - Cada falla activa se agrega a la barra lateral de **Alertas Activas**.
+   - **Total agua suministrada**: suma de ambos volúmenes.
+3. **Salud de Módulos de Hardware**:
+   - `wifi_ok` (Pin 14): Módulo WiFi.
+   - `chiller_ok` (Pin 27): Chiller (Agua Fría).
+   - `boiler_ok` (Pin 19): Boiler (Agua Caliente).
+   - `luces_ok` (Pin 13): Sistema de Iluminación.
+   - Si cualquiera pasa a `false`, se resalta en rojo como falla detectada y se incorpora al panel de alertas activas.
 
 ---
 
-## 🚀 Ejecución en Desarrollo Local
+## 🎨 Identidad Corporativa Xendar
 
-### Opción A: Ejecutar todo con un comando
-```bash
-python run_local.py
-```
-Levanta FastAPI en `http://localhost:8000` y Streamlit en `http://localhost:8501`.
-
-### Opción B: Ejecutar en terminales separadas
-1. **Terminal 1 (Backend API)**:
-   ```bash
-   uvicorn api:app --reload --port 8000
-   ```
-2. **Terminal 2 (Frontend Dashboard)**:
-   ```bash
-   streamlit run app.py --server.port 8501
-   ```
+- **Azul Marino Principal**: `#1E334D` (Sidebar, encabezados y métricas)
+- **Azul Oscuro Profundo**: `#142336` (Hover y contrastes)
+- **Turquesa Corporativo**: `#2B8A91` (Acentos activos, badges OK)
+- **Aqua Claro**: `#48B5B8` (Detalles sobre fondo oscuro)
+- **Fondo General**: `#F4F8FA`
+- **Tarjetas**: Blancas `#FFFFFF`, bordes `#E2E8F0`, radio 14px
+- **Tipografía**: *Inter* (Google Fonts)
 
 ---
 
-## 🧪 Simulación y Pruebas del ESP32
+## 🧪 Pruebas y Simulación
 
-### Vía Python:
+### Probar con Botón de Pánico Activo vía script:
 ```bash
-python simulate_esp32.py http://localhost:8000/api/telemetria
+python simulate_esp32.py http://localhost:8000/api/telemetria --panic
 ```
 
-### Vía cURL (Windows PowerShell / Bash):
+### Probar en Railway:
 ```bash
-curl -X POST http://localhost:8000/api/telemetria \
-  -H "Content-Type: application/json" \
-  -d '{"wifi_ok": true, "chiller_ok": true, "boiler_ok": false, "luces_ok": true, "despachos_frio": 12, "despachos_calor": 5}'
+python simulate_esp32.py https://san-ecoland.up.railway.app/api/telemetria --panic
 ```
 
 ### Desde el Dashboard:
-El dashboard incluye en la barra lateral un menú desplegable **"🧪 Simulador de Hardware (ESP32)"** con botones para inyectar eventos de prueba (Falla en Boiler, 100% OK, Falla Múltiple y Limpieza de BD).
-
----
-
-## ☁️ Despliegue en Railway
-
-El proyecto incluye `Dockerfile`, `nginx.conf` y `start.sh`.
-
-1. Subir los cambios a tu repositorio Git (GitHub/GitLab):
-   ```bash
-   git add .
-   git commit -m "feat: endpoint telemetria esp32 y dashboard estacion demo"
-   git push origin main
-   ```
-2. En Railway:
-   - Tu proyecto detectará automáticamente el `Dockerfile`.
-   - Railway asignará dinámicamente `$PORT` y Nginx enlazará dicho puerto con FastAPI (`/api/`) y Streamlit (`/`).
-   - La URL pública será: `https://<tu-app>.up.railway.app`.
-
-3. Endpoint público para el ESP32:
-   ```
-   POST https://<tu-app>.up.railway.app/api/telemetria
-   ```
-
----
-
-## 💻 Código de Ejemplo para ESP32 (Arduino / PlatformIO)
-
-```cpp
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
-
-const char* ssid = "TU_WIFI_SSID";
-const char* password = "TU_WIFI_PASSWORD";
-const char* serverUrl = "https://<tu-app>.up.railway.app/api/telemetria";
-
-int despachos_frio = 12;
-int despachos_calor = 5;
-
-void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nWiFi Conectado!");
-}
-
-void loop() {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(serverUrl);
-    http.addHeader("Content-Type", "application/json");
-
-    StaticJsonDocument<200> doc;
-    doc["wifi_ok"] = true;
-    doc["chiller_ok"] = true;
-    doc["boiler_ok"] = false;  // Falla simulada
-    doc["luces_ok"] = true;
-    doc["despachos_frio"] = despachos_frio;
-    doc["despachos_calor"] = despachos_calor;
-
-    String requestBody;
-    serializeJson(doc, requestBody);
-
-    int httpResponseCode = http.POST(requestBody);
-    Serial.print("Código de respuesta HTTP: ");
-    Serial.println(httpResponseCode);
-    http.end();
-  }
-  delay(10000); // Enviar cada 10 segundos o por evento
-}
-```
+En la barra lateral, expandir **"🧪 Simulador de Hardware (ESP32)"** y hacer clic en **"🚨 Simular Botón de Pánico"** o **"🟢 Normalizar Pánico"**.

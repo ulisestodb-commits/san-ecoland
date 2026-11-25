@@ -1,7 +1,8 @@
 """
-SAN ECOLAND — API REST de Telemetría IoT
+XENDAR — API REST de Telemetría IoT
 Endpoint para recepción de datos HTTP POST desde el ESP32 (Valija IoT).
 Ruta requerida: /api/telemetria
+Soporta: Telemetría de hardware, contadores de agua y Botón de Pánico (Pin 18).
 """
 
 import os
@@ -26,6 +27,7 @@ try:
         luces_ok: bool = Field(..., description="Estado del sistema de luces")
         despachos_frio: int = Field(..., ge=0, description="Cantidad de despachos de agua fría")
         despachos_calor: int = Field(..., ge=0, description="Cantidad de despachos de agua caliente")
+        panico_activo: bool = Field(default=False, description="Estado del Botón de Pánico / Emergencia (Pin 18)")
 
         class Config:
             json_schema_extra = {
@@ -35,14 +37,15 @@ try:
                     "boiler_ok": False,
                     "luces_ok": True,
                     "despachos_frio": 12,
-                    "despachos_calor": 5
+                    "despachos_calor": 5,
+                    "panico_activo": False
                 }
             }
 
     app = FastAPI(
-        title="San Ecoland — IoT Telemetry API",
-        version="2.0.0",
-        description="API para recepción de eventos y telemetría de la Valija IoT ESP32",
+        title="Xendar — IoT Telemetry API",
+        version="2.1.0",
+        description="API para recepción de eventos y telemetría de la Valija IoT ESP32 (Xendar)",
     )
 
     app.add_middleware(
@@ -56,7 +59,7 @@ try:
     @app.get("/")
     def root():
         return {
-            "service": "San Ecoland IoT API",
+            "service": "Xendar IoT Telemetry API",
             "station": "Demo",
             "endpoint": "/api/telemetria",
             "docs": "/docs",
@@ -88,6 +91,7 @@ try:
             "message": "Telemetría registrada exitosamente",
             "record_id": record_id,
             "station": "Demo",
+            "panico_activo": data.get("panico_activo", False),
             "has_faults": len(failing_modules) > 0,
             "failing_modules": failing_modules,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -125,7 +129,7 @@ except ImportError:
 
     async def root(request):
         return JSONResponse({
-            "service": "San Ecoland IoT API (Starlette mode)",
+            "service": "Xendar IoT Telemetry API (Starlette mode)",
             "station": "Demo",
             "endpoint": "/api/telemetria",
             "status": "online"
@@ -155,6 +159,7 @@ except ImportError:
             "luces_ok": bool(body["luces_ok"]),
             "despachos_frio": int(body["despachos_frio"]),
             "despachos_calor": int(body["despachos_calor"]),
+            "panico_activo": bool(body.get("panico_activo", False)),
         }
 
         record_id = database.save_telemetry(data, station="Demo")
@@ -174,6 +179,7 @@ except ImportError:
             "message": "Telemetría registrada exitosamente",
             "record_id": record_id,
             "station": "Demo",
+            "panico_activo": data["panico_activo"],
             "has_faults": len(failing_modules) > 0,
             "failing_modules": failing_modules,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

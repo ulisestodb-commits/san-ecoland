@@ -1,5 +1,5 @@
 """
-Test script para simular el envío HTTP POST desde el ESP32
+Test script para simular el envío HTTP POST desde el ESP32 (incluyendo Botón de Pánico)
 """
 
 import sys
@@ -15,17 +15,18 @@ def test_database_and_payload():
     print("1. Limpiando base de datos...")
     database.reset_telemetry("Demo")
     
-    # Payload exacto del ESP32
+    # Payload exacto del ESP32 con botón de pánico
     payload = {
         "wifi_ok": True,
         "chiller_ok": True,
         "boiler_ok": False,
         "luces_ok": True,
         "despachos_frio": 12,
-        "despachos_calor": 5
+        "despachos_calor": 5,
+        "panico_activo": True
     }
     
-    print("\n2. Guardando payload del ESP32:")
+    print("\n2. Guardando payload del ESP32 con Botón de Pánico:")
     print(json.dumps(payload, indent=2))
     
     rec_id = database.save_telemetry(payload, station="Demo")
@@ -43,6 +44,7 @@ def test_database_and_payload():
     assert latest["luces_ok"] is True
     assert latest["despachos_frio"] == 12
     assert latest["despachos_calor"] == 5
+    assert latest["panico_activo"] is True  # Botón de pánico activo!
     
     # Cálculo de Litros: cada despacho = 0.25 L
     litros_frio = latest["despachos_frio"] * 0.25
