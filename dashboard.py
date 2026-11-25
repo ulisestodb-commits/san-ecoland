@@ -1,7 +1,7 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║              XENDAR | Smart & Sustentable                    ║
-║      Tablero de Control Ejecutivo · Telemetría IoT ESP32     ║
+║      Tablero de Control Ejecutivo · Telemetría IoT           ║
 ╚══════════════════════════════════════════════════════════════╝
 """
 
@@ -30,9 +30,36 @@ st.markdown("""
     /* ── Importación de Tipografía Google Fonts: Inter ── */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-    /* ── Aplicación global de fuente ── */
-    html, body, [class*="css"], .stApp, * {
+    /* Aplicar Inter a todos los textos (sin romper iconos de Streamlit) */
+    html, body, [data-testid="stAppViewContainer"], .stApp, .stMarkdown, p, h1, h2, h3, h4, h5, h6, label, button, input, select {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+
+    /* Proteger iconos de Material para que no rendericen ligaduras como texto */
+    [data-testid="stIconMaterial"], .material-symbols-rounded {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+    }
+
+    /* Ocultar botón de colapso de sidebar y tooltip de atajo de teclado */
+    [data-testid="stSidebarCollapseButton"],
+    button[data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    div[data-testid="stSidebarHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Ocultar tooltip flotante de Keyboard Shortcut */
+    [data-baseweb="tooltip"], div[role="tooltip"] {
+        display: none !important;
+        visibility: hidden !important;
     }
 
     /* ── Paleta de Colores Corporativa Xendar ── */
@@ -126,6 +153,7 @@ st.markdown("""
         background: var(--navy) !important;
         padding-left: 1.1rem !important;
         padding-right: 1.1rem !important;
+        padding-top: 1rem !important;
     }
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
@@ -168,14 +196,59 @@ st.markdown("""
     .alert-row-ok .ar-name  { color: #FFFFFF !important; font-weight: 800; font-size: 0.92rem; }
     .alert-row-ok .ar-issue { color: #A5F3FC !important; font-size: 0.82rem; font-weight: 600; }
 
+    /* Expander personalizado sin flechas rotas */
+    [data-testid="stExpander"] {
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stExpander"] summary {
+        list-style: none !important;
+    }
+    [data-testid="stExpander"] summary::-webkit-details-marker {
+        display: none !important;
+    }
+    [data-testid="stExpander"] summary [data-testid="stIconMaterial"],
+    [data-testid="stExpander"] summary svg {
+        display: none !important;
+    }
+    [data-testid="stExpander"] summary p {
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        color: #CBD5E1 !important;
+    }
+
+    /* ── Simetría perfecta en bloques horizontales y columnas ── */
+    [data-testid="stHorizontalBlock"] {
+        width: 100% !important;
+        display: flex !important;
+        gap: 16px !important;
+        align-items: stretch !important;
+    }
+    [data-testid="column"] {
+        flex: 1 1 0% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    [data-testid="column"] > div {
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
     /* ── Tarjetas Métricas (KPIs de Suministro) ── */
     .kpi-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 14px;
-        padding: 20px 22px;
+        padding: 22px 24px;
         box-shadow: var(--shadow);
         height: 100%;
+        min-height: 145px;
+        width: 100%;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -219,6 +292,12 @@ st.markdown("""
         padding: 18px 20px;
         box-shadow: var(--shadow);
         height: 100%;
+        min-height: 155px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .hw-card-fail {
         background: #FFF5F5 !important;
@@ -228,6 +307,12 @@ st.markdown("""
         padding: 18px 20px;
         box-shadow: 0 4px 14px rgba(220, 38, 38, 0.22) !important;
         height: 100%;
+        min-height: 155px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .hw-card-panic {
         animation: panic-pulse 1.3s infinite ease-in-out;
@@ -235,6 +320,12 @@ st.markdown("""
         border-radius: 14px;
         padding: 18px 20px;
         height: 100%;
+        min-height: 155px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .hw-card-panic * {
         color: #FFFFFF !important;
@@ -317,36 +408,32 @@ st.markdown("""
 
 
 # ─────────────────────────────────────────────────────────────
-# ESPECIFICACIONES DE MÓDULOS DE HARDWARE
+# ESPECIFICACIONES DE MÓDULOS DE HARDWARE (Sin pines expuestos)
 # ─────────────────────────────────────────────────────────────
 MODULE_SPECS = {
     "wifi_ok": {
         "name": "Módulo WiFi",
-        "pin": "Pin 14",
         "icon": "📶",
         "desc_ok": "Conectividad normal · Señal estable",
-        "desc_fail": "Módulo WiFi fuera de servicio · Sin telemetría remota",
+        "desc_fail": "Módulo WiFi fuera de servicio",
     },
     "chiller_ok": {
         "name": "Chiller (Agua Fría)",
-        "pin": "Pin 27",
         "icon": "🧊",
-        "desc_ok": "Sistema de refrigeración operativo · Temperatura óptima",
-        "desc_fail": "Módulo Chiller fuera de servicio · Suministro frío suspendido",
+        "desc_ok": "Refrigeración operativa · Temp. óptima",
+        "desc_fail": "Módulo Chiller fuera de servicio",
     },
     "boiler_ok": {
         "name": "Boiler (Agua Caliente)",
-        "pin": "Pin 19",
         "icon": "🔥",
         "desc_ok": "Sistema térmico operativo · Caldera lista",
-        "desc_fail": "Módulo Boiler fuera de servicio · Suministro caliente suspendido",
+        "desc_fail": "Módulo Boiler fuera de servicio",
     },
     "luces_ok": {
         "name": "Sistema de Luces",
-        "pin": "Pin 13",
         "icon": "💡",
         "desc_ok": "Iluminación operativa · Consumo nominal",
-        "desc_fail": "Módulo de Iluminación fuera de servicio · Falla detectada",
+        "desc_fail": "Módulo de Iluminación fuera de servicio",
     },
 }
 
@@ -355,7 +442,7 @@ MODULE_SPECS = {
 # RENDERIZADORES VISUALES (HTML NATIVO)
 # ─────────────────────────────────────────────────────────────
 def render_kpi_card(title: str, litros: float, despachos: int, accent_color: str, icon: str) -> str:
-    """Genera una tarjeta métrica ejecutiva de suministro con estética Xendar."""
+    """Genera una tarjeta métrica ejecutiva de suministro con estética simétrica Xendar."""
     return f"""
     <div class="kpi-card" style="border-top: 4px solid {accent_color};">
         <div>
@@ -371,13 +458,14 @@ def render_kpi_card(title: str, litros: float, despachos: int, accent_color: str
 
 
 def render_panic_module_card(panico_activo: bool, is_waiting: bool = False) -> str:
-    """Renderiza la tarjeta del Botón de Pánico en la grilla de módulos."""
+    """Renderiza la tarjeta del Botón de Pánico en la grilla de módulos (sin referencias a pines)."""
     if is_waiting:
         return """
         <div class="kpi-card" style="border-top: 4px solid #94A3B8;">
-            <div class="hw-title">🚨 Botón de Pánico</div>
-            <div style="font-size:0.72rem; color:#94A3B8; margin-top:-6px; margin-bottom:8px;">PIN 18 · EMERGENCIA</div>
-            <div style="margin: 8px 0;"><span class="badge-waiting">⏳ EN ESPERA</span></div>
+            <div>
+                <div class="hw-title">🚨 Botón de Pánico</div>
+                <div style="margin: 10px 0;"><span class="badge-waiting">⏳ EN ESPERA</span></div>
+            </div>
             <div style="font-size:0.82rem; color:#64748B;">Esperando datos de la estación</div>
         </div>
         """
@@ -385,27 +473,27 @@ def render_panic_module_card(panico_activo: bool, is_waiting: bool = False) -> s
     if panico_activo:
         return """
         <div class="hw-card-panic">
-            <div style="font-size:0.88rem; font-weight:900; letter-spacing:0.04em; text-transform:uppercase;">
-                🚨 BOTÓN DE PÁNICO
-            </div>
-            <div style="font-size:0.72rem; color:#FEE2E2; margin-top:2px; margin-bottom:8px; font-weight:700;">
-                PIN 18 · EMERGENCIA ACTIVA
-            </div>
-            <div style="margin: 8px 0;">
-                <span class="badge-panic">🚨 ALERTA ACTIVADA</span>
+            <div>
+                <div style="font-size:0.88rem; font-weight:900; letter-spacing:0.04em; text-transform:uppercase;">
+                    🚨 BOTÓN DE PÁNICO
+                </div>
+                <div style="margin: 10px 0;">
+                    <span class="badge-panic">🚨 ALERTA ACTIVADA</span>
+                </div>
             </div>
             <div style="font-size:0.82rem; font-weight:700;">
-                ⚠ BOTÓN ACCIONADO · Protocolo de seguridad en curso
+                ⚠ BOTÓN ACCIONADO · Emergencia en curso
             </div>
         </div>
         """
     else:
         return """
         <div class="hw-card-ok">
-            <div class="hw-title">🚨 Botón de Pánico</div>
-            <div style="font-size:0.72rem; color:#94A3B8; margin-top:-6px; margin-bottom:8px;">PIN 18 · EMERGENCIA</div>
-            <div style="margin: 8px 0;">
-                <span class="badge-ok">● NORMAL / STANDBY</span>
+            <div>
+                <div class="hw-title">🚨 Botón de Pánico</div>
+                <div style="margin: 10px 0;">
+                    <span class="badge-ok">● NORMAL / STANDBY</span>
+                </div>
             </div>
             <div style="font-size:0.82rem; color:#2B8A91; font-weight:600;">
                 ✓ Monitoreo activo · Sin activación
@@ -415,18 +503,18 @@ def render_panic_module_card(panico_activo: bool, is_waiting: bool = False) -> s
 
 
 def render_hardware_card(key: str, is_ok: bool, is_waiting: bool = False) -> str:
-    """Renderiza una tarjeta de módulo de hardware (WiFi, Chiller, Boiler, Luces)."""
+    """Renderiza una tarjeta de módulo de hardware sin referencias a pines."""
     spec = MODULE_SPECS[key]
     name = spec["name"]
-    pin = spec["pin"]
     icon = spec["icon"]
 
     if is_waiting:
         return f"""
         <div class="kpi-card" style="border-top: 4px solid #94A3B8;">
-            <div class="hw-title">{icon} {name}</div>
-            <div style="font-size:0.72rem; color:#94A3B8; margin-top:-6px; margin-bottom:8px;">{pin}</div>
-            <div style="margin: 8px 0;"><span class="badge-waiting">⏳ EN ESPERA</span></div>
+            <div>
+                <div class="hw-title">{icon} {name}</div>
+                <div style="margin: 10px 0;"><span class="badge-waiting">⏳ EN ESPERA</span></div>
+            </div>
             <div style="font-size:0.82rem; color:#64748B;">Esperando datos de la estación</div>
         </div>
         """
@@ -434,10 +522,11 @@ def render_hardware_card(key: str, is_ok: bool, is_waiting: bool = False) -> str
     if is_ok:
         return f"""
         <div class="hw-card-ok">
-            <div class="hw-title">{icon} {name}</div>
-            <div style="font-size:0.72rem; color:#94A3B8; margin-top:-6px; margin-bottom:8px;">{pin}</div>
-            <div style="margin: 8px 0;">
-                <span class="badge-ok">● OPERATIVO</span>
+            <div>
+                <div class="hw-title">{icon} {name}</div>
+                <div style="margin: 10px 0;">
+                    <span class="badge-ok">● OPERATIVO</span>
+                </div>
             </div>
             <div style="font-size:0.82rem; color:#2B8A91; font-weight:600;">
                 ✓ {spec['desc_ok']}
@@ -447,10 +536,11 @@ def render_hardware_card(key: str, is_ok: bool, is_waiting: bool = False) -> str
     else:
         return f"""
         <div class="hw-card-fail">
-            <div class="hw-title-fail">🚨 {icon} {name}</div>
-            <div style="font-size:0.72rem; color:#DC2626; margin-top:-6px; margin-bottom:8px; font-weight:700;">{pin} · FUERA DE SERVICIO</div>
-            <div style="margin: 8px 0;">
-                <span class="badge-fail">✖ FALLA DETECTADA</span>
+            <div>
+                <div class="hw-title-fail">🚨 {icon} {name}</div>
+                <div style="margin: 10px 0;">
+                    <span class="badge-fail">✖ FALLA DETECTADA</span>
+                </div>
             </div>
             <div style="font-size:0.82rem; color:#DC2626; font-weight:700;">
                 ⚠ {spec['desc_fail']}
@@ -495,7 +585,7 @@ def render_sidebar_alerts():
                 🚨 BOTÓN DE PÁNICO ACTIVADO
             </div>
             <div style="font-size:0.8rem; margin-top:3px; font-weight:600;">
-                Pin 18 · Emergencia en Estación Demo
+                Emergencia en Estación Demo · Alerta activada
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -566,7 +656,7 @@ def render_dashboard_content():
                     ALERTA DE EMERGENCIA: BOTÓN DE PÁNICO ACTIVADO EN ESTACIÓN DEMO
                 </div>
                 <div class="panic-banner-sub">
-                    Evento registrado a las <strong>{panic_time}</strong> · Valija IoT ESP32 (Pin 18) · Protocolo de seguridad y baliza activados
+                    Evento registrado a las <strong>{panic_time}</strong> · Protocolo de seguridad y baliza activados
                 </div>
             </div>
             <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 6px 14px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase;">
@@ -599,7 +689,7 @@ def render_dashboard_content():
                     NODO ACTIVO · HARDWARE TELEMETRY
                 </div>
                 <div style="font-size:1.85rem; font-weight:900; color:#1E334D; margin-top:2px;">
-                    Estación Demo <span style="font-size:0.95rem; font-weight:500; color:#64748B;">(Valija IoT ESP32)</span>
+                    Estación Demo
                 </div>
             </div>
             <div style="text-align:right;">
@@ -628,7 +718,7 @@ def render_dashboard_content():
             icon="⚠️"
         )
 
-    # ── 3. MÓDULO DE CONTADORES DE SUMINISTRO (KPIs) ─────────
+    # ── 3. MÓDULO DE CONTADORES DE SUMINISTRO (KPIs SIMÉTRICOS) ──
     st.markdown('<p class="sec-label">💧 Suministro y Consumo de Agua (0.25 L por despacho)</p>', unsafe_allow_html=True)
 
     despachos_frio = latest["despachos_frio"] if not is_blank else 0
@@ -676,7 +766,7 @@ def render_dashboard_content():
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-    # ── 4. GRILLA DE ESTADO DE COMPONENTES (5 MÓDULOS) ────────
+    # ── 4. GRILLA DE ESTADO DE COMPONENTES (5 MÓDULOS SIMÉTRICOS) ─
     st.markdown('<p class="sec-label">🩺 Estado Operativo de Hardware & Sistema de Emergencia</p>', unsafe_allow_html=True)
 
     c_panic, c_wifi, c_chiller, c_boiler, c_luces = st.columns(5)
@@ -708,7 +798,6 @@ def render_dashboard_content():
     if history and len(history) > 0:
         df = pd.DataFrame(history)
 
-        # Formateo de columnas para visualización ejecutiva
         df_display = pd.DataFrame()
         df_display["ID"] = df["id"]
         df_display["Fecha / Hora"] = df["timestamp"]
@@ -737,7 +826,7 @@ def main():
     with st.sidebar:
         # Header Corporativo Xendar
         st.markdown("""
-        <div style='text-align:center; padding:14px 0 16px;'>
+        <div style='text-align:center; padding:10px 0 16px;'>
             <div style='display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; background:#2B8A91; border-radius:12px; margin-bottom:10px; box-shadow:0 4px 14px rgba(0,0,0,0.3);'>
                 <span style='font-size:1.6rem; color:#FFFFFF; font-weight:900;'>X</span>
             </div>
@@ -756,9 +845,9 @@ def main():
 
         st.markdown('<div style="font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#8B9EC8;margin-bottom:6px;">📡 Estación Activa</div>', unsafe_allow_html=True)
         st.markdown("""
-        <div style="background: rgba(43, 138, 145, 0.18); border: 1px solid rgba(72, 181, 184, 0.4); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
+        <div style="background: rgba(43, 138, 145, 0.18); border: 1px solid rgba(72, 181, 184, 0.4); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
             <div style="font-size: 1.05rem; font-weight: 800; color: #FFFFFF;">Estación Demo</div>
-            <div style="font-size: 0.76rem; color: #A5F3FC;">Valija IoT ESP32 · Pin 18 Activo</div>
+            <div style="font-size: 0.8rem; color: #A5F3FC; font-weight: 600; margin-top: 2px;">Prueba de Concepto</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -769,8 +858,8 @@ def main():
 
         st.markdown('<div style="border-top:1px solid rgba(255,255,255,0.1);margin:16px 0 12px;"></div>', unsafe_allow_html=True)
 
-        # ── SECCIÓN DE PRUEBAS / SIMULADOR INTEGRADO ESP32 ─────
-        with st.expander("🧪 Simulador de Hardware (ESP32)", expanded=False):
+        # ── SECCIÓN DE PRUEBAS / SIMULADOR INTEGRADO ───────────
+        with st.expander("Simulador de Hardware", expanded=False):
             st.caption("Pruebas interactivas de eventos para validar el tablero sin hardware físico.")
 
             # Botón de Pánico
@@ -863,7 +952,7 @@ def main():
         </h1>
         <div class='brand-subtitle'>Tablero de Control Ejecutivo · Telemetría IoT</div>
         <p class='brand-desc'>
-            Monitoreo en tiempo real de dispensers de hidratación, salud de hardware y sistema de emergencia (Pin 18)
+            Monitoreo en Tiempo Real
         </p>
     </div>
     """, unsafe_allow_html=True)
